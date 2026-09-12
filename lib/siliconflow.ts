@@ -23,10 +23,13 @@ export class SiliconFlowError extends Error {
 }
 
 /**
- * 生成一张图片，返回图片临时 URL
+ * 生成图片，返回图片临时 URL 列表
+ * Kolors 支持 batch_size 一次生成多张（1–4），image_count 恰好也在 1–4，
+ * 因此一个任务只需一次 API 调用（注意：其他模型如 Qwen-Image 不支持批量，
+ * 若日后切换模型需回退为逐张调用）
  * 内置自动重试：网络异常 / 服务端 5xx 时等待 2 秒再试一次
  */
-export async function generateImage(prompt: string): Promise<string> {
+export async function generateImages(prompt: string, count: number): Promise<string[]> {
   const apiKey = process.env.SILICONFLOW_API_KEY;
   if (!apiKey) {
     throw new SiliconFlowError("缺少 SILICONFLOW_API_KEY 环境变量", false);
@@ -46,18 +49,20 @@ export async function generateImage(prompt: string): Promise<string> {
           model: MODEL,
           prompt,
           image_size: IMAGE_SIZE,
-          batch_size: 1, // 一次一张，多张由调用方循环（失败时语义更清晰）
+          batch_size: count, // Kolors 专属参数（1–4），一次请求生成全部图片
         }),
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
 
       if (res.ok) {
         const data = await res.json();
-        const url: string | undefined = data?.images?.[0]?.url;
-        if (!url) {
-          throw new SiliconFlowError("API 响应中没有图片 URL", false);
+        const urls: string[] = (data?.images ?? [])
+          .map((img: { url?: string }) => img?.url)
+          .filter((url: unknown): url is string => typeof url === "string" && url.length > 0);
+        if (urls.length !== count) {
+          throw new SiliconFlowError(`API 返回 ${urls.length} 张图片，期望 ${count} 张`, false);
         }
-        return url;
+        return urls;
       }
 
       // 4xx：请求本身有问题（key 无效、参数错误等），重试无意义

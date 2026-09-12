@@ -5,7 +5,7 @@
 
 import { createClient } from "./supabase/server";
 import { buildPrompt } from "./prompt";
-import { generateImage } from "./siliconflow";
+import { generateImages } from "./siliconflow";
 
 export async function processTask(taskId: string, userId: string): Promise<void> {
   // 以当前用户的身份操作数据库（Cookie 里的 JWT + RLS 保证只能改自己的任务）
@@ -29,13 +29,9 @@ export async function processTask(taskId: string, userId: string): Promise<void>
       .single();
     if (fetchErr || !task) throw new Error("任务不存在或已被删除");
 
-    // 3. 逐张生成（一次一张，哪张失败一目了然）
+    // 3. 一次 API 调用批量生成（Kolors 支持 batch_size 1–4，image_count 恰好在 1–4 范围内）
     const prompt = buildPrompt(task.product_name);
-    const urls: string[] = [];
-    for (let i = 0; i < task.image_count; i++) {
-      const url = await generateImage(prompt);
-      urls.push(url);
-    }
+    const urls = await generateImages(prompt, task.image_count);
 
     // 4. 全部成功：写回结果
     const { error: saveErr } = await supabase
