@@ -108,8 +108,7 @@ ai-image-platform/
 │   ├── reset-password/         # 设置新密码（从邮件链接进入）
 │   ├── auth/callback/route.ts  # 邮件链接回调：code 换会话后跳转
 │   ├── tasks/
-│   │   ├── page.tsx            # 任务列表（Server Component）
-│   │   ├── new/                # 新建任务页（page + 客户端表单）
+│   │   ├── page.tsx            # 任务列表（Server Component，页码分页）
 │   │   └── [id]/page.tsx       # 任务详情（图片/失败原因/重试入口）
 │   ├── actions/auth.ts         # 认证 Server Actions（注册/登录/退出/找回密码/设置新密码）
 │   └── api/
@@ -121,6 +120,7 @@ ai-image-platform/
 ├── components/
 │   ├── status-badge.tsx        # 状态徽章
 │   ├── auto-refresh.tsx        # 自动刷新（router.refresh 轮询）
+│   ├── new-task-dialog.tsx     # 新建任务弹窗（成功后自动提示，不跳转）
 │   └── retry-button.tsx        # 重新生成按钮
 ├── lib/
 │   ├── supabase/server.ts      # Supabase 服务端客户端（Cookie 会话）
