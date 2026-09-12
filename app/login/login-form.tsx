@@ -58,12 +58,19 @@ export function LoginForm({ authError }: { authError?: string }) {
             邮箱
           </label>
           <input
+            key={`email-${tab}`} // 切 Tab 时重挂载，清掉浏览器自动填充的值
             id="email"
             name="email"
             type="email"
             required
             maxLength={254}
-            autoComplete="email"
+            autoComplete={tab === "login" ? "email" : "off"}
+            // 注册 Tab 阻止自动填充：Chrome 会无视 autocomplete="off"，
+            // 但不会填充 readOnly 字段，聚焦时再移除 readOnly 恢复输入
+            readOnly={tab === "register"}
+            onFocus={(e) =>
+              tab === "register" && e.currentTarget.removeAttribute("readonly")
+            }
             placeholder="you@example.com"
             className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
           />
@@ -84,6 +91,7 @@ export function LoginForm({ authError }: { authError?: string }) {
             )}
           </div>
           <input
+            key={`password-${tab}`} // 切 Tab 时重挂载，清掉浏览器自动填充的值
             id="password"
             name="password"
             type="password"
@@ -91,6 +99,10 @@ export function LoginForm({ authError }: { authError?: string }) {
             minLength={6}
             maxLength={72}
             autoComplete={tab === "login" ? "current-password" : "new-password"}
+            readOnly={tab === "register"}
+            onFocus={(e) =>
+              tab === "register" && e.currentTarget.removeAttribute("readonly")
+            }
             placeholder="至少 6 位"
             className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-900"
           />
